@@ -15,6 +15,7 @@ class Headless
       @log_file_path = options.fetch(:log_file_path, "/dev/null")
       @codec = options.fetch(:codec, "qtrle")
       @frame_rate = options.fetch(:frame_rate, 30)
+      @audio = options.fetch(:audio, false)
     end
 
     def capture_running?
@@ -22,7 +23,8 @@ class Headless
     end
 
     def start_capture
-      CliUtil.fork_process("#{CliUtil.path_to('ffmpeg')} -y -r #{@frame_rate} -s #{@dimensions} -f x11grab -i :#{@display} -vcodec #{@codec} #{@tmp_file_path}", @pid_file_path, @log_file_path)
+      audio = @audio ? "-f alsa -ac 2 -i pulse" : ""
+      CliUtil.fork_process("#{CliUtil.path_to('ffmpeg')} -y -r #{@frame_rate} -s #{@dimensions} -f x11grab -i :#{@display} -vcodec #{@codec} #{audio} #{@tmp_file_path}", @pid_file_path, @log_file_path)
       at_exit do
         exit_status = $!.status if $!.is_a?(SystemExit)
         stop_and_discard
